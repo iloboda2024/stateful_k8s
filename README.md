@@ -1,5 +1,6 @@
-### This app can work in k8s deployed to DigitalOcean. The StorageClass for postgres is using DO class.
-
+<ins>
+### This app was tested on k8s from DigitalOcean. The StorageClass for the Postgres uses the do class.
+</ins>
 1. Build an image, and push it to the registory
 
 &nbsp;&nbsp;&nbsp;&nbsp;docker build -t stateful-flask:v0 -f task/Dockerfile <context here>  
