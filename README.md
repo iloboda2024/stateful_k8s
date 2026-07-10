@@ -1,35 +1,196 @@
-### <ins>This app was tested on k8s from DigitalOcean. The StorageClass for the Postgres uses the do class.</ins>
+# Stateful Flask Application on Kubernetes
 
-1. Build an image, and push it to the registory
+This application has been tested on a **DigitalOcean Kubernetes (DOKS)** cluster.
 
-&nbsp;&nbsp;&nbsp;&nbsp;docker build -t stateful-flask:v0 -f task/Dockerfile <context here>  
-&nbsp;&nbsp;&nbsp;&nbsp;docker login  
-&nbsp;&nbsp;&nbsp;&nbsp;docker tag stateful-flask:v0 <dockerhub account>/stateful-flask:v0  
-&nbsp;&nbsp;&nbsp;&nbsp;docker push <dockerhub account>/stateful-flask:v0  
+> **Note**
+> The PostgreSQL deployment uses the default DigitalOcean StorageClass (`do-block-storage` or your configured `do` StorageClass).
 
-2. Deploy postgres to k8s 
+---
 
-&nbsp;&nbsp;&nbsp;&nbsp;kubectl apply -f kubernetes/*.yaml  
+## Prerequisites
 
-3. Deploy web app to kubernetes  
+Before deploying, ensure you have:
 
-&nbsp;&nbsp;&nbsp;&nbsp;kubectl create -n statefull-webapp  
-&nbsp;&nbsp;&nbsp;&nbsp;pod=$(kubectl get pod -n stateful-flask -l app=stateful-flask -o jsonpath='{.items[0].metadata.name}')  
+- Docker
+- Kubernetes cluster
+- `kubectl`
+- Helm
+- A container registry
 
-&nbsp;&nbsp;&nbsp;&nbsp;kubectl exec -it $pod -n stateful-flask -- flask db init  
-&nbsp;&nbsp;&nbsp;&nbsp;kubectl exec -it $pod -n stateful-flask -- flask db migrate  
-&nbsp;&nbsp;&nbsp;&nbsp;kubectl exec -it $pod -n stateful-flask -- flask db upgrade  
+---
 
-4. Install ingress  
+# 1. Build and Push the Docker Image
 
-&nbsp;&nbsp;&nbsp;&nbsp;curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4  
-&nbsp;&nbsp;&nbsp;&nbsp;chmod 700 get_helm.sh  
-&nbsp;&nbsp;&nbsp;&nbsp;./get_helm.sh  
+Build the application image:
 
-&nbsp;&nbsp;&nbsp;&nbsp;helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx  
-&nbsp;&nbsp;&nbsp;&nbsp;helm repo update  
-&nbsp;&nbsp;&nbsp;&nbsp;helm install nginx-ingress ingress-nginx/ingress-nginx --set controller.publishService.enabled=true --create-namespace  --namespace ingress-nginx  
+```bash
+docker build -t stateful-flask:v0 -f task/Dockerfile .
+```
 
-5. Test
+Login to your container registry:
 
-&nbsp;&nbsp;&nbsp;&nbsp;curl -X POST -H "Content-Type: application/json" -d '{"title": "Learn Flask", "description": "First task"}' http://<website name here>/tasks  
+```bash
+docker login
+```
+
+Tag the image:
+
+```bash
+docker tag stateful-flask:v0 <YOUR_REGISTRY>/stateful-flask:v0
+```
+
+Push the image:
+
+```bash
+docker push <YOUR_REGISTRY>/stateful-flask:v0
+```
+
+> Replace `<YOUR_REGISTRY>` with your Docker Hub username or container registry.
+
+---
+
+# 2. Deploy PostgreSQL
+
+Deploy all Kubernetes resources:
+
+```bash
+kubectl apply -f kubernetes/*.yaml
+```
+
+---
+
+# 3. Deploy the Flask Application
+
+Create the namespace (if it doesn't already exist):
+
+```bash
+kubectl create namespace stateful-flask
+```
+
+Get the application pod:
+
+```bash
+pod=$(kubectl get pods \
+    -n stateful-flask \
+    -l app=stateful-flask \
+    -o jsonpath='{.items[0].metadata.name}')
+```
+
+Initialize the database:
+
+```bash
+kubectl exec -it $pod -n stateful-flask -- flask db init
+```
+
+Generate the migration:
+
+```bash
+kubectl exec -it $pod -n stateful-flask -- flask db migrate
+```
+
+Apply the migration:
+
+```bash
+kubectl exec -it $pod -n stateful-flask -- flask db upgrade
+```
+
+---
+
+# 4. Install NGINX Ingress Controller
+
+Download Helm:
+
+```bash
+curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4
+
+chmod +x get_helm.sh
+
+./get_helm.sh
+```
+
+Add the Ingress NGINX repository:
+
+```bash
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+
+helm repo update
+```
+
+Install the controller:
+
+```bash
+helm install nginx-ingress ingress-nginx/ingress-nginx \
+    --namespace ingress-nginx \
+    --create-namespace \
+    --set controller.publishService.enabled=true
+```
+
+---
+
+# 5. Test the API
+
+Create a task:
+
+```bash
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -d '{
+        "title":"Learn Flask",
+        "description":"First task"
+      }' \
+  http://<LOAD_BALANCER_IP>/tasks
+```
+
+Replace `<LOAD_BALANCER_IP>` with the external IP or domain of your Ingress.
+
+---
+
+## Project Structure
+
+```text
+.
+├── kubernetes/
+│   ├── postgres.yaml
+│   ├── deployment.yaml
+│   ├── service.yaml
+│   └── ingress.yaml
+├── task/
+│   ├── Dockerfile
+│   └── ...
+└── README.md
+```
+
+---
+
+## Deployment Flow
+
+```text
+Build Docker Image
+        │
+        ▼
+Push to Registry
+        │
+        ▼
+Deploy PostgreSQL
+        │
+        ▼
+Deploy Flask App
+        │
+        ▼
+Run Database Migrations
+        │
+        ▼
+Install NGINX Ingress
+        │
+        ▼
+Access the API
+```
+
+---
+
+## Notes
+
+- Tested on **DigitalOcean Kubernetes (DOKS)**.
+- PostgreSQL uses the DigitalOcean StorageClass.
+- Update the image name in your Kubernetes manifests before deployment.
+- Ensure your Ingress or LoadBalancer exposes the application before testing.
