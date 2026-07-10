@@ -145,23 +145,6 @@ Replace `<LOAD_BALANCER_IP>` with the external IP or domain of your Ingress.
 
 ---
 
-## Project Structure
-
-```text
-.
-├── kubernetes/
-│   ├── postgres.yaml
-│   ├── deployment.yaml
-│   ├── service.yaml
-│   └── ingress.yaml
-├── task/
-│   ├── Dockerfile
-│   └── ...
-└── README.md
-```
-
----
-
 ## Deployment Flow
 
 ```text
