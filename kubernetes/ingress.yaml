@@ -1,0 +1,19 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: stateful-flask-ingress
+  namespace: stateful-flask
+spec:
+ ingressClassName: nginx
+ rules:
+ - host: stateless-flask.geekgeneration.space
+   http:
+     paths:
+     - path: /tasks
+       pathType: Prefix
+       backend:
+         service:
+           name: stateful-flask-svc
+           port:
+             number: 5000

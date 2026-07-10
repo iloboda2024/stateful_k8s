@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stateful-flask
+  namespace: stateful-flask
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: stateful-flask
+  template:
+    metadata:
+      labels:
+        app: stateful-flask
+    spec:
+      containers:
+      - name: stateful-flask
+        image: johnyonthespot/stateful-flask:v2
+        ports:
+        - containerPort: 5000
+        imagePullPolicy: Always
