@@ -1,12 +1,12 @@
 ### This app can work in k8s deployed to DigitalOcean. The StorageClass for postgres is using DO class.
 
 1. Build an image, and push it to the registory
-<br>
-docker build -t stateful-flask:v0 -f task/Dockerfile <context here>  
-docker login  
-docker tag stateful-flask:v0 <dockerhub account>/stateful-flask:v0  
-docker push <dockerhub account>/stateful-flask:v0  
-<br>
+
+&nbsp;&nbsp;&nbsp;&nbsp;docker build -t stateful-flask:v0 -f task/Dockerfile <context here>  
+&nbsp;&nbsp;&nbsp;&nbsp;docker login  
+&nbsp;&nbsp;&nbsp;&nbsp;docker tag stateful-flask:v0 <dockerhub account>/stateful-flask:v0  
+&nbsp;&nbsp;&nbsp;&nbsp;docker push <dockerhub account>/stateful-flask:v0  
+
 2. Deploy postgres to k8s 
 
 kubectl apply -f kubernetes/*.yaml  
